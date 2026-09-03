@@ -1,0 +1,7 @@
+node_modules
+coverage
+plugin/build
+example/ios
+example/android
+package-lock.json
+*.storekit

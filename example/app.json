@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "StoreKitTestingExample",
+    "slug": "storekit-testing-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.storekittesting"
+    },
+    "plugins": [
+      [
+        "expo-storekit-testing-plugin",
+        {
+          "configurationFile": "./storekit/Configuration.storekit"
+        }
+      ]
+    ]
+  }
+}

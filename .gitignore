@@ -1,0 +1,20 @@
+node_modules/
+coverage/
+*.log
+*.tgz
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# The TypeScript build is published, but rebuilt for every release.
+plugin/build/
+
+# Expo example native output and local state.
+example/.expo/
+example/ios/
+example/android/
+.integration/

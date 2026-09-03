@@ -1,0 +1,21 @@
+{
+  "name": "storekit-testing-example",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "prebuild": "expo prebuild"
+  },
+  "dependencies": {
+    "expo": "~57.0.19",
+    "expo-storekit-testing-plugin": "file:./expo-storekit-testing-plugin-0.1.0.tgz",
+    "react": "19.2.3",
+    "react-native": "0.86.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  }
+}

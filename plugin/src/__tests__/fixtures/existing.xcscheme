@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme LastUpgradeVersion="1600" version="1.7">
+  <LaunchAction buildConfiguration="Debug">
+    <StoreKitConfigurationFileReference identifier="../Old/First.storekit" />
+    <CommandLineArguments>
+      <CommandLineArgument argument="--keep" isEnabled="YES" />
+    </CommandLineArguments>
+    <StoreKitConfigurationFileReference identifier="../Old/Second.storekit" />
+  </LaunchAction>
+</Scheme>

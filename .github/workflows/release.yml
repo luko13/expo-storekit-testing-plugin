@@ -1,0 +1,191 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-tag:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24.x
+
+      - name: Match tag to package version
+        env:
+          RELEASE_REF_NAME: ${{ github.ref_name }}
+          RELEASE_REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [[ "$RELEASE_REF_TYPE" != "tag" ]]; then
+            echo "Run this workflow from a release tag."
+            exit 1
+          fi
+
+          semver_pattern='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+          if [[ ! "$RELEASE_REF_NAME" =~ $semver_pattern ]]; then
+            echo "Release tag must be a stable SemVer prefixed with v."
+            exit 1
+          fi
+
+          package_version="$(node --print "require('./package.json').version")"
+          if [[ "$RELEASE_REF_NAME" != "v$package_version" ]]; then
+            echo "Tag $RELEASE_REF_NAME does not match package version $package_version."
+            exit 1
+          fi
+
+  quality:
+    name: Quality (Node ${{ matrix.node }})
+    needs: validate-tag
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20.19.4, 22.x, 24.x]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit package tarball
+        run: npm run pack:audit
+
+  prebuild:
+    name: Expo SDK ${{ matrix.expo }} prebuild
+    needs: validate-tag
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        expo: ['54', '55', '56', '57']
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 20.19.4
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build tarball used by the example
+        run: npm pack --pack-destination example
+
+      - name: Verify prebuild lifecycle
+        run: node scripts/verify-example-prebuild.js --sdk ${{ matrix.expo }}
+
+  apple-validation:
+    name: StoreKit and Xcode validation
+    needs: validate-tag
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 20.19.4
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build tarball used by the example
+        run: npm pack --pack-destination example
+
+      - name: Generate verified iOS project
+        run: >-
+          node scripts/verify-example-prebuild.js
+          --sdk 57
+          --workspace .integration/storekit-sdk-57
+          --keep
+
+      - name: Validate StoreKit catalog
+        env:
+          STOREKIT_FILE: ${{ github.workspace }}/.integration/storekit-sdk-57/storekit/Configuration.storekit
+        run: >-
+          xcrun swift -e
+          'import Foundation; import StoreKitTest;
+          let path = ProcessInfo.processInfo.environment["STOREKIT_FILE"]!;
+          _ = try SKTestSession(contentsOf: URL(fileURLWithPath: path));
+          print("StoreKit catalog loaded successfully.")'
+
+      - name: Validate Xcode project and shared scheme
+        working-directory: .integration/storekit-sdk-57
+        run: |
+          xcodebuild -list -project ios/StoreKitTestingExample.xcodeproj
+          xcodebuild \
+            -project ios/StoreKitTestingExample.xcodeproj \
+            -scheme StoreKitTestingExample \
+            -showBuildSettings > /dev/null
+
+  publish:
+    name: Publish package
+    needs: [quality, prebuild, apple-validation]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24.x
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - name: Use trusted publishing compatible npm
+        run: npm install --global npm@11.6.1
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild and audit release package
+        run: |
+          npm audit --omit=dev --audit-level=high
+          npm run build
+          npm run pack:audit
+
+      - name: Publish with trusted publishing
+        run: npm publish --access public --provenance

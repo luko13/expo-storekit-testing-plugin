@@ -1,0 +1,64 @@
+{
+  "name": "expo-storekit-testing-plugin",
+  "version": "0.1.0",
+  "description": "Expo config plugin for local StoreKit Testing schemes",
+  "main": "app.plugin.js",
+  "types": "plugin/build/index.d.ts",
+  "files": [
+    "app.plugin.js",
+    "plugin/build",
+    "package.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "expo-module build plugin",
+    "clean": "expo-module clean plugin",
+    "format": "prettier --write . --ignore-path .prettierignore",
+    "format:check": "prettier --check . --ignore-path .prettierignore",
+    "lint": "expo-module lint plugin",
+    "typecheck": "tsc --project plugin/tsconfig.json --noEmit",
+    "test": "expo-module test plugin --runInBand",
+    "pack:audit": "node scripts/audit-pack.js",
+    "example:prebuild": "npm pack --pack-destination example && node scripts/verify-example-prebuild.js",
+    "prepack": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "expo",
+    "config-plugin",
+    "ios",
+    "storekit",
+    "storekit-testing"
+  ],
+  "author": "Luis",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luko13/expo-storekit-testing-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luko13/expo-storekit-testing-plugin/issues"
+  },
+  "homepage": "https://github.com/luko13/expo-storekit-testing-plugin#readme",
+  "engines": {
+    "node": ">=20.19.4"
+  },
+  "peerDependencies": {
+    "expo": ">=54 <58"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "@types/xcode": "^3.0.0",
+    "eslint": "^8.57.1",
+    "expo": "~57.0.19",
+    "expo-module-scripts": "^56.0.3",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "packageManager": "npm@11.6.1"
+}
