@@ -1,8 +1,7 @@
-describe('package entry point', () => {
-  it('loads as an Expo config plugin function', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const plugin = require('../../../app.plugin.js');
+import plugin from '../index';
 
+describe('plugin entry point', () => {
+  it('exports an Expo config plugin function from source', () => {
     expect(typeof plugin).toBe('function');
   });
 });
