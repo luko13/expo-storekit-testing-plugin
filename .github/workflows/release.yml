@@ -140,12 +140,15 @@ jobs:
       - name: Validate StoreKit catalog
         env:
           STOREKIT_FILE: ${{ github.workspace }}/.integration/storekit-sdk-57/storekit/Configuration.storekit
-        run: >-
-          xcrun swift -e
-          'import Foundation; import StoreKitTest;
-          let path = ProcessInfo.processInfo.environment["STOREKIT_FILE"]!;
-          _ = try SKTestSession(contentsOf: URL(fileURLWithPath: path));
-          print("StoreKit catalog loaded successfully.")'
+        run: |
+          testing_frameworks="$(xcode-select --print-path)/Platforms/MacOSX.platform/Developer/Library/Frameworks"
+          DYLD_FRAMEWORK_PATH="$testing_frameworks" xcrun --sdk macosx swift \
+            -F "$testing_frameworks" \
+            -framework StoreKitTest \
+            -e 'import Foundation; import StoreKitTest;
+            let path = ProcessInfo.processInfo.environment["STOREKIT_FILE"]!;
+            _ = try SKTestSession(contentsOf: URL(fileURLWithPath: path));
+            print("StoreKit catalog loaded successfully.")'
 
       - name: Validate Xcode project and shared scheme
         working-directory: .integration/storekit-sdk-57
