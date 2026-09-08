@@ -116,6 +116,7 @@ function installExample(workspace, sdkVersion) {
   manifest.dependencies = {
     ...manifest.dependencies,
     expo: `~${sdkVersion}.0.0`,
+    [packageMetadata.name]: `file:./${tarballName}`,
   };
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 

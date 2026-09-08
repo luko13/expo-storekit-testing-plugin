@@ -35,12 +35,20 @@ const allowedRootFiles = new Set([
   'package.json',
   'README.md',
 ]);
-const requiredFiles = new Set([
-  ...allowedRootFiles,
-  'plugin/build/index.d.ts',
-  'plugin/build/index.js',
-  'plugin/build/index.js.map',
+const buildModules = [
+  'index',
+  'native',
+  'scheme',
+  'types',
+  'validation',
+  'xcode',
+];
+const allowedBuildFiles = buildModules.flatMap((moduleName) => [
+  `plugin/build/${moduleName}.d.ts`,
+  `plugin/build/${moduleName}.js`,
+  `plugin/build/${moduleName}.js.map`,
 ]);
+const allowedFiles = new Set([...allowedRootFiles, ...allowedBuildFiles]);
 
 function run(command, args, options = {}) {
   const result = childProcess.spawnSync(command, args, {
@@ -91,9 +99,9 @@ function auditManifest(packResult) {
 
   const packagedFiles = new Set(packResult.files.map(normalizedPackagePath));
   const unexpected = [...packagedFiles].filter(
-    (file) => !allowedRootFiles.has(file) && !file.startsWith('plugin/build/'),
+    (file) => !allowedFiles.has(file),
   );
-  const missing = [...requiredFiles].filter((file) => !packagedFiles.has(file));
+  const missing = [...allowedFiles].filter((file) => !packagedFiles.has(file));
 
   if (unexpected.length > 0) {
     throw new Error(
